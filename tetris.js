@@ -1,8 +1,20 @@
 const canvas = document.getElementById('tetris');
 const context = canvas.getContext('2d');
+let dropCounter = 0;
+let dropInterval = 1000;
 
+let lastTime = 0;
 context.scale(20, 20);
+const arena = createMatrix(12, 20);
 
+
+const player = {
+    pos: {
+        x: 5,
+        y: 5,
+    },
+    matrix: createPiece('T'),
+}
 
 function collide(arena, player) {
     const m = player.matrix;
@@ -74,6 +86,46 @@ function createPiece(type) {
     }
 }
 
+function playerMove( ) {
+    player.pos.x += dir;
+    if (collide(arena, player)) {
+        player.pos.x -= dir;
+    }
+}
+
+function playerRotate(dir) {
+    const pos = player.pos.x
+    let offset = 1;
+    rotate(player.matrix, dir);
+    while (collide(arena, player)) {
+        player.pos.x += offset;
+        offset = -(offset + (offset > 0 ? 1 : -1));
+        if (offset > player.matrix[0].length) {
+            rotate(player.matrix, -dir);
+            player.pos.x = pos;
+            return;
+        }
+    }
+}
+
+function rotate(matrix, dir) {
+    for (let y = 0; y < matrix.length; ++y) {
+        for (let x = 0; x < y; ++x) {
+            [
+                matrix[x][y],
+                matrix[y][x],
+            ] = [
+                    matrix[y][x],
+                    matrix[x][y],
+                ]
+        }
+    }
+    if (dir > 0) {
+        matrix.forEach(row => row.reverse());
+    } else {
+        matrix.reverse();
+    }
+}
 
 function draw() {
     context.fillStyle = '#000';
@@ -134,52 +186,6 @@ function playerDrop() {
 }
     
 
-function playerMove(dir) {
-    player.pos.x += dir;
-    if (collide(arena, player)) {
-        player.pos.x -= dir;
-    }
-}
-
-function playerRotate(dir) {
-    const pos = player.pos.x
-    let offset = 1;
-    rotate(player.matrix, dir);
-    while (collide(arena, player)) {
-        player.pos.x += offset;
-        offset = -(offset + (offset > 0 ? 1 : -1));
-        if (offset > player.matrix[0].length) {
-            rotate(player.matrix, -dir);
-            player.pos.x = pos;
-            return;
-        }
-    }
-}
-
-function rotate(matrix, dir) {
-    for (let y = 0; y < matrix.length; ++y) {
-        for (let x = 0; x < y.length; ++x) {
-            [
-                matrix[x][y],
-                matrix[y][x],
-            ] = [
-                matrix[y][x],
-                matrix[x][y],
-            ]
-        }
-    }
-    if (dir > 0) {
-        matrix.forEach(row => row.reverse());
-    } else {
-        matrix.reverse();
-    }
-}
-
-let dropCounter = 0;
-let dropInterval = 1000;
-
-let lastTime = 0;
-
 function update(time = 0) {
     const deltaTime = time - lastTime;
     lastTime = time;
@@ -192,16 +198,6 @@ function update(time = 0) {
     requestAnimationFrame(update);
 }
 
-const arena = createMatrix(12, 20);
-
-
-const player = {
-    pos: {
-        x: 5,
-        y: 5,
-    },
-    matrix: createPiece('T'),
-}
 
 document.addEventListener('keydown', event => {
     console.log(event);
